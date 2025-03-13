@@ -1,6 +1,6 @@
 import streamlit as st
 
-from utils_openai import retorna_resposta_modelo
+from utils_openai import retorna_resposta_modelo, retorna_imagem
 from utils_files import *
 
 import openai
@@ -54,7 +54,7 @@ def seleciona_conversa(nome_arquivo):
 
 def tab_configuracoes(tab):
     modelo_escolhido = tab.selectbox('Selecione o modelo',
-                                     ['gpt-4o-mini', 'gpt-3.5-turbo'])
+                                     ['gpt-4o-mini', 'gpt-3.5-turbo', 'dall-e-3'])
     st.session_state['modelo'] = modelo_escolhido
 
 #PÁGINA INICIAL
@@ -71,30 +71,40 @@ def pagina_principal():
     prompt = st.chat_input('Fale com o chat')
 
     if prompt:
-        nova_mensagem = {'role':'user',
-                    'content': prompt}
-        chat = st.chat_message(nova_mensagem['role'])
-        chat.markdown(nova_mensagem['content'])
-        mensagens.append(nova_mensagem)
+        if st.session_state['modelo'] == 'dall-e-3':
+            image_url = retorna_imagem(prompt,
+                                       nome_arquivo = 'D:\Python\Projetos\MyChat\imagens\AIgenerator.jpg',
+                                       modelo='dall-e-3')
+            if image_url:  # Só exibe se a URL não for None
+                chat = st.chat_message("assistant")  # Adiciona a mensagem no chat
+                chat.image(image_url)  # Exibe a imagem dentro do chat
+            else:
+                st.error("Erro ao gerar a imagem. Tente novamente.")
+        else:
+            nova_mensagem = {'role':'user',
+                        'content': prompt}
+            chat = st.chat_message(nova_mensagem['role'])
+            chat.markdown(nova_mensagem['content'])
+            mensagens.append(nova_mensagem)
 
-        chat = st.chat_message('assistant')
-        #Faz o efeito de o chat estar escrevendo
-        placeholder = chat.empty()
-        placeholder.markdown('▌')
-        resposta_completa = ''
-        respostas = retorna_resposta_modelo(mensagens,
-                                            modelo=st.session_state['modelo'],
-                                            stream=True)
-        for resposta in respostas:
-            resposta_completa += resposta.choices[0].delta.content or ""
-            placeholder.markdown(resposta_completa + '▌')
-        placeholder.markdown(resposta_completa)
-        nova_mensagem = {'role': 'assistant',
-                        'content': resposta_completa}
-        mensagens.append(nova_mensagem)
+            chat = st.chat_message('assistant')
+            #Faz o efeito de o chat estar escrevendo
+            placeholder = chat.empty()
+            placeholder.markdown('▌')
+            resposta_completa = ''
+            respostas = retorna_resposta_modelo(mensagens,
+                                                modelo=st.session_state['modelo'],
+                                                stream=True)
+            for resposta in respostas:
+                resposta_completa += resposta.choices[0].delta.content or ""
+                placeholder.markdown(resposta_completa + '▌')
+            placeholder.markdown(resposta_completa)
+            nova_mensagem = {'role': 'assistant',
+                            'content': resposta_completa}
+            mensagens.append(nova_mensagem)
 
-        st.session_state['mensagens'] = mensagens
-        salvar_mensagens(mensagens)
+            st.session_state['mensagens'] = mensagens
+            salvar_mensagens(mensagens)
 
 #MAIN
 def main():
