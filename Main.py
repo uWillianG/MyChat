@@ -64,22 +64,44 @@ def pagina_principal():
 
     st.header('🤖 MyChat', divider=True)
 
-    for mensagem in mensagens:
-        chat = st.chat_message(mensagem['role'])
-        chat.markdown(mensagem['content'])
+    for mensagem in st.session_state['mensagens']:
+        chat = st.chat_message(mensagem['role'])  # Define se é usuário ou assistente
+
+        # Se o conteúdo for uma imagem, exibe como imagem
+        if mensagem['role'] == 'assistant' and mensagem['content'].endswith('.jpg'):
+            chat.image(mensagem['content'])  # Exibe a imagem gerada
+        else:
+            chat.markdown(mensagem['content'])
 
     prompt = st.chat_input('Fale com o chat')
 
     if prompt:
         if st.session_state['modelo'] == 'dall-e-3':
-            image_url = retorna_imagem(prompt,
-                                       nome_arquivo = 'D:\Python\Projetos\MyChat\imagens\AIgenerator.jpg',
-                                       modelo='dall-e-3')
-            if image_url:  # Só exibe se a URL não for None
-                chat = st.chat_message("assistant")  # Adiciona a mensagem no chat
-                chat.image(image_url)  # Exibe a imagem dentro do chat
+            # Adiciona a mensagem do usuário ao chat
+            nova_mensagem_usuario = {'role': 'user', 
+                                    'content': prompt}
+            mensagens.append(nova_mensagem_usuario)
+            st.session_state['mensagens'].append(nova_mensagem_usuario)
+
+            chat = st.chat_message('user')  # Exibe a mensagem do usuário no chat
+            chat.markdown(prompt)
+
+            imagem_path = retorna_imagem(prompt,
+                                        modelo='dall-e-3')
+
+            if imagem_path:
+                nova_mensagem = {'role': 'assistant', 
+                                'content': imagem_path}  # Guarda o caminho da imagem na conversa
+                mensagens.append(nova_mensagem)
+                st.session_state['mensagens'].append(nova_mensagem)
+                chat_image = st.chat_message('assistant')
+                chat_image.image(imagem_path)
+                #st.error('Erro ao gerar a imagem. Tente novamente.')
+                
+                st.session_state['mensagens'] = mensagens
+                salvar_mensagens(mensagens)
             else:
-                st.error("Erro ao gerar a imagem. Tente novamente.")
+                st.error('Erro ao gerar a imagem. Tente novamente.')
         else:
             nova_mensagem = {'role':'user',
                         'content': prompt}
