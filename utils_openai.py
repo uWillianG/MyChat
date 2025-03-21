@@ -1,6 +1,9 @@
 import openai
+
 import requests
 from PIL import Image
+import time
+import os
 
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv())
@@ -19,13 +22,10 @@ def retorna_resposta_modelo(mensagens,
     return response
 
 def retorna_imagem(prompt,
-                   nome_arquivo,
                    modelo='dall-e-3'
                    ):
     resposta_imagem=client.images.generate(model=modelo,
                                 prompt=prompt,
-                                #'Você é um gerador de imagens, \
-                                #realize a geração conforme a solicitação do usuário: {solicitacao_imagem}',
                                 size='1024x1024',
                                 quality = 'standard',
                                 style = 'natural',
@@ -38,10 +38,13 @@ def retorna_imagem(prompt,
     else:
         return None  # Se a resposta não contém imagem, retorna None
 
-    # Baixa e salva a imagem
+ # Criar um nome único para a imagem (timestamp)
+    pasta_imagens = "D:/Python/Projetos/MyChat/imagens/"
+    nome_arquivo = os.path.join(pasta_imagens, f"AIgenerator_{int(time.time())}.jpg")
+
+    # Baixa e salva a imagem com um nome único
     img_data = requests.get(image_url).content
     with open(nome_arquivo, 'wb') as f:
         f.write(img_data)
 
-    return image_url  # Retorna a URL correta da imagem gerada
-
+    return nome_arquivo  # Retorna o caminho local da imagem salva
