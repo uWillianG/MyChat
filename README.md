@@ -1,3 +1,5 @@
+# MyChat
+
 MyChat é um aplicativo de chat desenvolvido em Python que utiliza a API do OpenAI para fornecer respostas inteligentes e interativas. 
 Este projeto é organizado de forma modular para facilitar a manutenção e a expansão de funcionalidades.
 
